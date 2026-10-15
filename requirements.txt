@@ -1,0 +1,11 @@
+# MarketPulse AI - Member 4 (LLM Layer). Pinned for reproducibility.
+# Tested on Python 3.10+ (developed against 3.14). Runtime + dev deps.
+
+# --- runtime ---
+pydantic==2.14.1
+openai==3.31.0            # OpenAI-compatible client for the AMD Token Factory endpoint
+python-dateutil==2.9.0.post0
+PyYAML==6.0.3
+
+# --- dev / tests ---
+pytest==9.1.1

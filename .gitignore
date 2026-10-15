@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# Secrets - NEVER commit real keys
+.env
+.env.*
+!.env.example
+
+# Audit logs / generated artifacts
+llm/audit/*.jsonl
+logs/
+eval/out/
+
+# Large datasets (Member 1/2 ML data) - NOT part of the LLM layer
+full_ml_feature_matrix.csv
+data/
+*.parquet
+
+# OS
+.DS_Store

@@ -1,0 +1,10 @@
+[project]
+name = "marketpulse-llm"
+version = "0.1.0"
+description = "MarketPulse AI - Member 4: multilingual extraction + grounded AI Decision Assistant (Component E)"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+python_files = ["test_*.py"]

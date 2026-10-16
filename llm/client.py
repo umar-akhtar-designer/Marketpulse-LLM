@@ -76,9 +76,16 @@ class AMDClient:
         )
         self.last_latency_ms: float | None = None
 
-    def complete(self, messages, *, temperature=None, max_tokens=None, json_mode=False) -> str:
+    def _models_to_try(self) -> list[str]:
+        models = [self.model]
+        for m in self.settings.fallback_models:
+            if m and m not in models:
+                models.append(m)
+        return models
+
+    def _complete_once(self, model, messages, temperature, max_tokens, json_mode) -> str:
         kwargs: dict = {
-            "model": self.model,
+            "model": model,
             "messages": messages,
             "temperature": self.settings.temperature if temperature is None else temperature,
         }
@@ -86,7 +93,6 @@ class AMDClient:
             kwargs["max_tokens"] = max_tokens
         if json_mode:
             kwargs["response_format"] = {"type": "json_object"}
-        start = time.perf_counter()
         try:
             resp = self._client.chat.completions.create(**kwargs)
         except Exception:
@@ -95,9 +101,30 @@ class AMDClient:
                 resp = self._client.chat.completions.create(**kwargs)
             else:
                 raise
-        finally:
-            self.last_latency_ms = (time.perf_counter() - start) * 1000.0
         return resp.choices[0].message.content or ""
+
+    def complete(self, messages, *, temperature=None, max_tokens=None, json_mode=False) -> str:
+        from openai import RateLimitError
+
+        # The AMD endpoint is shared: a model can hit its concurrency limit (HTTP 429).
+        # On that, fall through to the next configured model so the demo never dies.
+        models = self._models_to_try()
+        last_exc: Exception | None = None
+        for i, model in enumerate(models):
+            start = time.perf_counter()
+            try:
+                out = self._complete_once(model, messages, temperature, max_tokens, json_mode)
+                self.model = model
+                self.name = f"AMDClient:{model}"
+                return out
+            except RateLimitError as exc:
+                last_exc = exc
+                if i + 1 < len(models):
+                    time.sleep(min(2.0 * (i + 1), 5.0))  # brief backoff before switching
+                continue
+            finally:
+                self.last_latency_ms = (time.perf_counter() - start) * 1000.0
+        raise last_exc if last_exc else RuntimeError("no model available")
 
 
 def get_default_client(settings: Settings | None = None) -> LLMClient:

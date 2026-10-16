@@ -36,6 +36,7 @@ class Settings:
     base_url: str
     api_key: str
     model: str
+    fallback_models: tuple[str, ...]
     timeout_s: float
     max_retries: int
     temperature: float
@@ -58,6 +59,12 @@ def get_settings() -> Settings:
         base_url=os.environ.get("AMD_BASE_URL", "https://developer.amd.com.cn/radeon/api/v1").strip(),
         api_key=os.environ.get("AMD_API_KEY", "").strip(),
         model=os.environ.get("AMD_MODEL", "DeepSeek-V4.1-Flash").strip(),
+        fallback_models=tuple(
+            m.strip() for m in os.environ.get(
+                "AMD_FALLBACK_MODELS",
+                "DeepSeek-V4-Flash,Qwen3.8-Flash-Next,GLM-5.3-Flash",
+            ).split(",") if m.strip()
+        ),
         timeout_s=float(os.environ.get("AMD_TIMEOUT_S", "60")),
         max_retries=int(os.environ.get("AMD_MAX_RETRIES", "3")),
         temperature=float(os.environ.get("AMD_TEMPERATURE", "0.0")),
